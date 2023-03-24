@@ -1,0 +1,72 @@
+{
+  "name": "old_resnet50",
+  "device": null,
+  "seed": null,
+  "new_model": {
+    "arch": "resnet50",
+    "pretrained_model_path": null,
+    "model_key_in_ckpt": null,
+    "resume": null,
+    "emb_dim": 512
+  },
+  "old_model": {
+    "arch": null,
+    "pretrained_model_path": null,
+    "pretrained_classfier_path": null,
+    "model_key_in_ckpt": null,
+    "emb_dim": 512
+  },
+  "dataset": {
+    "type": "landmark",
+    "class_num": 91313,
+    "data_dir": null,
+    "img_list": "./annotation/gldv2_debug.txt",
+    "img_size": 224
+  },
+  "test_dataset": {
+    "type": "landmark",
+    "name": "gldv2",
+    "data_dir": null,
+    "img_size": 224
+  },
+  "optimizer": {
+    "type": "sgd",
+    "lr": 1e-01,
+    "momentum": 0.9,
+    "weight_decay": 1e-4
+  },
+  "loss": {
+    "type": "softmax",
+    "scale": 30,
+    "margin": 0.3
+  },
+  "comp_loss": {
+    "type": "bct",
+    "temperature": 0.01,
+    "triplet_margin": 0.8,
+    "distillation_temp": 0.01,
+    "topk_neg": 10,
+    "focal_beta": 5.0,
+    "focal_alpha": 1.0,
+    "weight": 1.0
+  },
+  "lr_scheduler": {
+    "type": "cosine",
+    "gamma": 0.1,
+    "lr_adjust_interval": 10
+  },
+  "trainer": {
+    "epochs": 30,
+    "batch_size": 128,
+    "num_workers": 2,
+    "save_dir": "saved/",
+    "save_period": 2,
+    "val_period": 5,
+    "verbosity": 2,
+    "print_period": 1,
+    "tensorboard": true
+  },
+  "gather_all": true,
+  "use_amp": true,
+  "use_pos_sampler": false
+}
