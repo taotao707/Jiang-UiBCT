@@ -17,17 +17,20 @@ from utils.util import parser_option, cudalize, set_random_seed, resume_checkpoi
 def main(config):
     args = argparse.Namespace(**config.config)
 
-    # fix random seeds for reproducibility
+    # fix random seeds for reproducibility，固定随机种子训练
     if args.seed is not None:
         set_random_seed(args.seed)
 
+    #使用环境变量初始化分布式训练，即进程同步
     if args.dist_url == "env://" and args.world_size == -1:
         args.world_size = int(os.environ["WORLD_SIZE"])
 
+    #world_size单机多卡训练时为1，应当为主机数量，ngpus_per_node代表进程数量
     args.distributed = args.world_size > 1 or args.multiprocessing_distributed
     config._update_config_by_dict({"distributed": args.distributed})
     ngpus_per_node = torch.cuda.device_count()
 
+    #分布式训练world_size乘后为总进程数，每卡一个
     if args.multiprocessing_distributed:
         args.world_size = ngpus_per_node * args.world_size
         torch.multiprocessing.spawn(main_worker, nprocs=ngpus_per_node, args=(ngpus_per_node, args, config))
@@ -36,13 +39,14 @@ def main(config):
 
 
 def main_worker(device, ngpus_per_node, args, config):
+    #device为GPU号，标识进行所在GPU
     args.device = device
     if args.distributed:
         if args.dist_url == "env://" and args.rank == -1:
             args.rank = int(os.environ["RANK"])
         if args.multiprocessing_distributed:
             # For multiprocessing distributed training, rank needs to be the
-            # global rank among all the processes
+            # global rank among all the processes，rank单机训练时为0，加过gpu后等于gpu号
             args.rank = args.rank * ngpus_per_node + device
             config._update_config_by_dict({"rank": args.rank})
             config._update_config_by_dict({"device": args.device})
@@ -53,6 +57,7 @@ def main_worker(device, ngpus_per_node, args, config):
 
     logger = create_logger(output_dir=config.log_dir, dist_rank=args.rank, name='train')
 
+    #处理MS1M-v3和IJB-C数据集
     logger.info("Setup dataset...")
     if args.dataset["type"] == 'landmark':
         # load training set
@@ -93,6 +98,7 @@ def main_worker(device, ngpus_per_node, args, config):
 
     model = cudalize(model, args)
 
+    #学习率调整策略
     steps_per_epoch = len(train_loader)
     lr_scheduler = build_lr_scheduler(args, optimizer, steps_per_epoch, sche_type=args.lr_scheduler["type"])
 
