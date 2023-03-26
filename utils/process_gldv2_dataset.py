@@ -7,6 +7,7 @@ import numpy as np
 random.seed(666)
 np.random.seed(666)
 
+#将csv文件转换为txt label
 def generate_gallery_list(source_file, saved_file):
     saved_file = open(saved_file, 'w')
     csv_reader = csv.reader(open(source_file, encoding='utf-8'))
@@ -19,6 +20,7 @@ def generate_gallery_list(source_file, saved_file):
     csv_reader.close()
     print("Gallery indices are built.")
 
+#将csv文件转换为txt label
 def generate_query_list(source_file, ref_file, saved_file_root, type='private'):
     query_list_file = open(os.path.join(saved_file_root, f'gldv2_{type}_query_list.txt'), 'w')
     query_gts_file = open(os.path.join(saved_file_root, f'gldv2_{type}_query_gt.txt'), 'w')
