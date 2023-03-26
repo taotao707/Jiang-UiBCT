@@ -76,7 +76,22 @@ def main_worker(device, ngpus_per_node, args, config):
                                                                  data_loader.query_gts
 
     elif args.dataset["type"] == 'face':
-        data_loader = module_data.MS1Mv3TrainDataset(args)
+        #load training set
+        data_loader = module_data.MS1Mv3TrainDataLoader(args)
+        train_loader, class_num = data_loader.train_loader, data_loader.class_num
+
+        #load evaluation set 
+        data_loader = module_data.IJBCEvalDataLoader(args)
+        eval_query_loader, eval_gallery_loader, eval_query_gts = data_loader.query_loader, \
+                                                                 data_loader.gallery_loader,\
+                                                                 data_loader.query_gts
+
+        # load test set
+        data_loader = module_data.IJBCTestDataLoader(args)
+        test_query_loader, test_gallery_loader, test_query_gts = data_loader.query_loader, \
+                                                                 data_loader.gallery_loader,\
+                                                                 data_loader.query_gts
+        
     else:
         raise NotImplementedError
 

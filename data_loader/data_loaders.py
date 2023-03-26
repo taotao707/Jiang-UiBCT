@@ -4,8 +4,9 @@ from torch.utils.data import DataLoader
 from torchvision import transforms
 
 from data_loader.GLDv2 import GLDv2_train_dataloader, GLDv2_test_dataloader, ROxford_test_dataloader
+from data_loader.MS1Mv3 import MS1Mv3_train_dataloader, IJBC_test_dataloader
 
-cls_num_dic = {'gldv2': 81313, 'imagenet': 1000, 'places365': 365, 'market': 1502}
+cls_num_dic = {'gldv2': 81313, 'imagenet': 1000, 'places365': 365, 'market': 1502, 'ms1mv3': 93431}
 normalize = transforms.Normalize(mean=[0.485, 0.456, 0.406], std=[0.229, 0.224, 0.225])
 
 
@@ -107,10 +108,43 @@ class MS1Mv3TrainDataLoader(DataLoader):
     """
         MS1Mv3 training dataset
     """
+    def __init__(self, args):
+        train_trans = transforms.Compose([
+            transforms.RandomResizedCrop(args.dataset["img_size"]),
+            transforms.RandomHorizontalFlip(),
+            transforms.ToTensor(),
+            normalize,
+        ])
+        self.data_dir = args.dataset["data_dir"]
+        self.train_loader = MS1Mv3_train_dataloader(args.dataset["data_dir"], train_trans,
+                                                   args.distributed, batch_size=args.trainer["batch_size"],
+                                                   num_workers=args.trainer["num_workers"],
+                                                   use_pos_sampler=args.use_pos_sampler)
+        self.class_num = cls_num_dic['ms1mv3']
+
+class IJBCEvalDataLoader(DataLoader):
+    """
+        IJB-C test dataset
+    """
 
     def __init__(self, args):
-        pass
-
+        val_trans = transforms.Compose([
+            transforms.Resize([args.test_dataset["img_size"], args.test_dataset["img_size"]]),
+            transforms.ToTensor(),
+            normalize,
+        ])
+        if args.test_dataset["data_dir"] is None:
+            args.test_dataset["data_dir"] = args.dataset["data_dir"]
+        query_dir, gallery_dir = args.test_dataset["data_dir"], args.test_dataset["data_dir"]
+        query_img_list = os.path.join('annotation/gldv2', "gldv2_public_query_list.txt")
+        gallery_img_list = os.path.join('annotation/gldv2', "gldv2_gallery_list.txt")
+        query_gts_list = os.path.join('annotation/gldv2', "gldv2_public_query_gt.txt")
+        self.query_loader, self.gallery_loader, self.query_gts = \
+            IJBC_test_dataloader(query_dir, query_img_list, gallery_dir,
+                                  gallery_img_list, query_gts_list, transform=val_trans,
+                                  batch_size=args.trainer["batch_size"],
+                                  num_workers=args.trainer["num_workers"],
+                                  distributed=args.distributed)
 
 class IJBCTestDataLoader(DataLoader):
     """
@@ -118,4 +152,20 @@ class IJBCTestDataLoader(DataLoader):
     """
 
     def __init__(self, args):
-        pass
+        val_trans = transforms.Compose([
+            transforms.Resize([args.test_dataset["img_size"], args.test_dataset["img_size"]]),
+            transforms.ToTensor(),
+            normalize,
+        ])
+        if args.test_dataset["data_dir"] is None:
+            args.test_dataset["data_dir"] = args.dataset["data_dir"]
+        query_dir, gallery_dir = args.test_dataset["data_dir"], args.test_dataset["data_dir"]
+        query_img_list = os.path.join('annotation/gldv2', "gldv2_private_query_list.txt")
+        gallery_img_list = os.path.join('annotation/gldv2', "gldv2_gallery_list.txt")
+        query_gts_list = os.path.join('annotation/gldv2', "gldv2_private_query_gt.txt")
+        self.query_loader, self.gallery_loader, self.query_gts = \
+            IJBC_test_dataloader(query_dir, query_img_list, gallery_dir,
+                                  gallery_img_list, query_gts_list, transform=val_trans,
+                                  batch_size=args.trainer["batch_size"],
+                                  num_workers=args.trainer["num_workers"],
+                                  distributed=args.distributed)
