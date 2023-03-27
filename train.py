@@ -139,17 +139,17 @@ def main_worker(device, ngpus_per_node, args, config):
         validation_loader_list = [eval_query_loader, eval_gallery_loader, eval_query_gts]
         test_loader_list = [test_query_loader, test_gallery_loader, test_query_gts]
         trainer = FaceTrainer(model,
-                                  comp_training=None,
-                                  train_loader=train_loader,
-                                  criterion=criterion,
-                                  optimizer=optimizer,
-                                  grad_scaler=grad_scaler,
-                                  args=args,
-                                  config=config,
-                                  logger=logger,
-                                  validation_loader_list=validation_loader_list,
-                                  test_loader_list=test_loader_list,
-                                  lr_scheduler=lr_scheduler)
+                              comp_training=None,
+                              train_loader=train_loader,
+                              criterion=criterion,
+                              optimizer=optimizer,
+                              grad_scaler=grad_scaler,
+                              args=args,
+                              config=config,
+                              logger=logger,
+                              validation_loader_list=validation_loader_list,
+                              test_loader_list=test_loader_list,
+                              lr_scheduler=lr_scheduler)
     else:
         raise NotImplementedError
 
