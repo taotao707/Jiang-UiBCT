@@ -42,6 +42,7 @@ class LandmarkTrainer:
         self.len_epoch = len(self.train_loader)
 
         self.comp_training = comp_training
+        self.for_comp_training = None
         self.query_loader_public, self.gallery_loader_public, self.query_gts_public = validation_loader_list
         self.query_loader_private, self.gallery_loader_private, self.query_gts_private = test_loader_list
 
@@ -345,6 +346,7 @@ class FaceTrainer:
         self.len_epoch = len(self.train_loader)
 
         self.comp_training = comp_training
+        self.for_comp_training = None
         self.query_loader_public, self.gallery_loader_public, self.query_gts_public = validation_loader_list
         self.query_loader_private, self.gallery_loader_private, self.query_gts_private = test_loader_list
 

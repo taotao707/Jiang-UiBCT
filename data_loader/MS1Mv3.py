@@ -37,7 +37,7 @@ class MXFaceDataset(Dataset):
             self.imgidx = list(self.imgrec.keys)
         print("Number of Samples:{} Number of Classes: {}".format(len(self.imgidx), int(self.header0[1] - self.header0[0])))
 
-    def __getitem__(self, index):
+    def __getitem__(self, index): #need_change
         idx = self.imgidx[index]
         s = self.imgrec.read_idx(idx)
         header, img = mx.recordio.unpack(s)
@@ -53,7 +53,7 @@ class MXFaceDataset(Dataset):
             img = self.transform(img)
         return img, label
 
-    def __len__(self):
+    def __len__(self): #need_change
         # print(len(self.imgidx))
         return len(self.imgidx)
 
