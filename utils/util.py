@@ -13,6 +13,9 @@ import torch
 from torch.optim.lr_scheduler import _LRScheduler
 from torch.optim.lr_scheduler import ReduceLROnPlateau
 from parse_config import ConfigParser
+import torch
+import torch.nn as nn
+import torch.nn.functional as F
 
 
 
@@ -76,13 +79,17 @@ def parser_option():
 
     # parser options about optimizer and lr scheduler
     options.extend([
-        CustomArgs(['--lr_scheduler'], default='cosine', type=str, help='Options: cosine or step',
+        CustomArgs(['--lr_scheduler'], default='cosine', type=str, help='Options: cosine or step or face_step',
                    target='lr_scheduler;type'),
-        CustomArgs(['--lr_adjust_interval'], default=10, type=int,
+        CustomArgs(['--lr_adjust_interval'], default=6, type=int,
                    help='only works when scheduler is STEP type',
                    target='lr_scheduler;lr_adjust_interval'),
         CustomArgs(['--lr'], default=0.1, type=float, help='',
                    target='optimizer;lr'),
+        CustomArgs(['--momentum'], default=0.9, type=float, help='',
+                   target='optimizer;momentum'),  
+        CustomArgs(['--weight_decay'], default=1e-4, type=float, help='',
+                   target='optimizer;weight_decay'),           
         CustomArgs(['-e', '--epochs'], default=30, type=int, help='',
                    target='trainer;epochs'),
         CustomArgs(['-bs', '--batch_size'], default=192, type=int, help='',
@@ -99,9 +106,9 @@ def parser_option():
     options.extend([
         CustomArgs(['--loss_func'], default='softmax', type=str, help='Options: softmax / arcface / cosface',
                    target='loss;type'),
-        CustomArgs(['--arcface_scale'], default=30.0, type=float, help='',
+        CustomArgs(['--arcface_scale'], default=64.0, type=float, help='',
                    target='loss;scale'),
-        CustomArgs(['--arcface_margin'], default=0.3, type=float, help='',
+        CustomArgs(['--arcface_margin'], default=0.5, type=float, help='',
                    target='loss;margin'),
     ])
 

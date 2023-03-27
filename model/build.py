@@ -3,6 +3,7 @@ import torch.nn as nn
 import torchvision
 from timm.scheduler.cosine_lr import CosineLRScheduler
 from timm.scheduler.step_lr import StepLRScheduler
+from timm.scheduler.multistep_lr import MultiStepLRScheduler
 
 from utils.util import load_pretrained_model
 from .model import Resnet_GeM, BackwardCompatibleModel
@@ -12,6 +13,8 @@ from .inception import Inception3
 def build_backbone(model_type="resnet50", class_num=1000, emb_dim=512):
     if model_type == "resnet50":
         backbone = torchvision.models.resnet50()
+    elif model_type == "resnet18":
+        backbone = torchvision.models.resnet18()
     elif model_type == "resnet101":
         backbone = torchvision.models.resnet101()
     elif model_type == "inception_v3":
@@ -74,6 +77,15 @@ def build_lr_scheduler(args, optimizer, steps_per_epoch, sche_type='cosine'):
         lr_scheduler = StepLRScheduler(
             optimizer,
             decay_t=args.lr_scheduler["lr_adjust_interval"] * steps_per_epoch,
+            decay_rate=0.1,
+            warmup_lr_init=args.optimizer["lr"] * 1e-3,
+            warmup_t=1 * steps_per_epoch,
+            t_in_epochs=False,
+        )
+    elif sche_type == 'face_step':
+        lr_scheduler = MultiStepLRScheduler(
+            optimizer,
+            decay_t=[20, 26, 32] * steps_per_epoch,
             decay_rate=0.1,
             warmup_lr_init=args.optimizer["lr"] * 1e-3,
             warmup_t=1 * steps_per_epoch,
