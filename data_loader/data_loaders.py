@@ -116,11 +116,11 @@ class MS1Mv3TrainDataLoader(DataLoader):
             normalize,
         ])
         self.data_dir = args.dataset["data_dir"]
-        self.train_loader = MS1Mv3_train_dataloader(args.dataset["data_dir"], train_trans,
+        self.train_loader, self.class_num = MS1Mv3_train_dataloader(args.dataset["data_dir"], args.dataset["img_list"], train_trans,
                                                    args.distributed, batch_size=args.trainer["batch_size"],
                                                    num_workers=args.trainer["num_workers"],
                                                    use_pos_sampler=args.use_pos_sampler)
-        self.class_num = cls_num_dic['ms1mv3']
+        
 
 class IJBCEvalDataLoader(DataLoader):
     """

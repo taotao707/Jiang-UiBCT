@@ -129,8 +129,8 @@ if __name__ == '__main__':
     #     print(sample.shape, label)
     #     exit()
 
-    root_dir = '/ProjectRoot/webpage_pretrain/runner_jlt/dataset/ms1m-retinaface-t1/ms1m-retinaface-t1'
-    img_list = '/ProjectRoot/webpage_pretrain/runner_jlt/dataset/ms1m-retinaface-t1/ms1m-retinaface-t1/ms1mv3_train_old_30percent_class_openclass.txt'
+    root_dir = 'E:/HHUC design Representation Learning/dataset_select/ms1m-retinaface-t1'
+    img_list = 'E:/HHUC design Representation Learning/dataset_select/ms1m-retinaface-t1/ms1mv3_train_old_30percent_class_openclass.txt'
     normalize = transforms.Normalize(mean=[0.485, 0.456, 0.406], std=[0.229, 0.224, 0.225])
     train_trans = transforms.Compose([
             transforms.RandomResizedCrop(224),

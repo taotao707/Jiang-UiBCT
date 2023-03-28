@@ -499,6 +499,8 @@ class FaceTrainer:
             prefix=f"Epoch:[{epoch + 1}/{epochs}]  ", logger=self.logger,
         )
 
+        #写：每个epoch提取classifier原型
+
         self.model.train()
         end_time = time.time()
         for batch_idx, (images, labels) in enumerate(self.train_loader):
@@ -518,7 +520,8 @@ class FaceTrainer:
                     cls_score = large_margin_module(self.args.loss["type"], cls_score, labels,
                                                     s=self.args.loss["scale"],
                                                     m=self.args.loss["margin"])
-                loss = self.criterion['base'](cls_score, labels)
+                #new class loss
+                loss = self.criterion['base'](cls_score, labels) 
 
                 n2o_cls_score = self.model.old_model.fc_classifier(feat)
 
@@ -534,34 +537,22 @@ class FaceTrainer:
                 else:
                     # Point2point backward compatible loss
                     # Options:
-                    #   - lwf (paper: "Learning without Forgetting")
-                    #   - fd (paper: "Positive-congruent training: Towards regression-free model updates", CVPR 2021)
                     #   - contra
                     #   - triplet
                     #   - l2
-                    #   - contra_ract (paper: "Hot-Refresh Model Upgrades with Regression-Free Compatible Training in Image Retrieval", ICLR 2022)
-                    #   - triplet_ract
-                    if self.args.comp_loss["type"] == 'lwf':
-                        old_cls_score = self.model.old_model.fc_classifier(feat_old)
-                        old_cls_score = F.softmax(old_cls_score / self.args.comp_loss["distillation_temp"], dim=1)
-                        loss_back_comp = -torch.sum(
-                            F.log_softmax(n2o_cls_score / self.args.comp_loss["temperature"]) * old_cls_score) \
-                                         / images.size(0)
-                    elif self.args.comp_loss["type"] == 'fd':
-                        criterion_mse = nn.MSELoss(reduce=False).cuda(self.args.device)
-                        loss_back_comp = torch.mean(criterion_mse(feat, feat_old), dim=1)
-                        predicted_target = cls_score.argmax(dim=1)
-                        bool_target_is_match = (predicted_target == labels)
-                        focal_weight = self.args.comp_loss["focal_beta"] * bool_target_is_match + self.args.comp_loss[
-                            "focal_alpha"]
-                        loss_back_comp = torch.mul(loss_back_comp, focal_weight).mean()
-                    elif self.args.comp_loss["type"] in ['contra', 'triplet', 'l2', 'contra_ract', 'triplet_ract']:
+                    #   - UiBCT
+                    #   - UiBCT_simple
+                    if self.args.comp_loss["type"] in ['contra', 'triplet', 'l2']:
                         loss_back_comp = self.criterion['back_comp'](feat, feat_old, labels)
+                    elif self.args.comp_loss["type"] in ['UiBCT', 'UiBCT_simple']:
+                        pass #写：UiBCT的loss器使用(w_o_hat, new_feat)
                     else:
                         raise NotImplementedError("Unknown backward compatible loss type")
 
             losses_cls.update(loss.item(), images.size(0))
             self.writer.add_scalar("Cls loss", losses_cls.avg, total_steps)
+
+            #写：根据epoch决定是否加上UiBCT    
 
             loss_back_comp_value = tensor_to_float(loss_back_comp)
             losses_back_comp.update(loss_back_comp_value, len(labels))

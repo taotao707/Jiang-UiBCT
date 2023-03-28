@@ -246,3 +246,75 @@ class SupConLoss(nn.Module):
         loss = loss.view(anchor_count, batch_size).mean()
 
         return loss
+
+class UniversalBackwardCompatibleLoss(nn.Module):
+    def __init__(self, hyper=0.05, margin=0.5, scale=64.0,
+                 loss_type='UiBCT', weight_uibct=1.0, lamda=0.9):
+        super(UniversalBackwardCompatibleLoss, self).__init__()
+        self.hyper = hyper
+        self.weight_uibct = weight_uibct
+        self.margin = margin
+        self.scale = scale
+        self.lamda = lamda
+
+        #   loss_type options:
+        #   - UiBCT
+        #   - UiBCT_simple
+        if loss_type not in ['UiBCT', 'UiBCT_simple']:
+            raise NotImplementedError("Unknown loss type: {}".format(loss_type))
+
+        self.loss_type = loss_type
+    
+    def prototype_get(self, new_model, old_model, loader):
+        with torch.no_grad():
+            for (x, labels) in loader: # extract old and new features
+                new_feat = new_model.forward(x)
+                old_feat = old_model.forward(x)
+
+            new_feat_list = [[] for _ in range(cls_num)]
+            old_feat_list = [[] for _ in range(cls_num)]
+            old_prototype = zeros(cls_num,)
+            
+            for i, label in enumerate(labels): # aggregate by category
+                new_feat_list[label].append(new_feat[i,:].unsqueeze_(0))
+                old_feat_list[label].append(old_feat[i,:].unsqueeze_(0))
+
+            for label in labels:
+                old_vertices = torch.stack(old_feat_list[label])
+                new_vertices = torch.stack(new_feat_list[label])
+                edges = torch.mm(new_vertices, new_vertices.t())
+                identity = torch.eye(edges.size(0))
+                mask = torch.eye(edges.size(0), edges.size(0)).bool()
+                edges.masked_fill_(mask, -1e9))
+                edges = softmax(edges, dim=0)
+                # Eq. (9)
+                edges = (1-lambda)*torch.inverse(identity - lambda * edges)
+                old_vertices = torch.mm(edges, old_vertices)
+                # Eq. (10)
+                old_prototype[label] = old_vertices.mean(dim=0)
+
+        return old_prototype
+
+    def forward(self, feat, feat_old, targets):
+        # features l2-norm
+        feat = F.normalize(feat, dim=1, p=2)
+        feat_old = F.normalize(feat_old, dim=1, p=2).detach()
+        batch_size = feat.size(0)
+        # gather tensors from all GPUs
+        if self.gather_all:
+            feat_large = gather_tensor(feat)
+            feat_old_large = gather_tensor(feat_old)
+            targets_large = gather_tensor(targets)
+            batch_size_large = feat_large.size(0)
+            current_gpu = dist.get_rank()
+            masks = targets_large.expand(batch_size_large, batch_size_large) \
+                .eq(targets_large.expand(batch_size_large, batch_size_large).t())
+            masks = masks[current_gpu * batch_size: (current_gpu + 1) * batch_size, :]  # size: (B, B*n_gpus)
+        else:
+            feat_large, feat_old_large = None, None
+            masks = targets.expand(batch_size, batch_size).eq(targets.expand(batch_size, batch_size).t())
+
+        # compute loss
+        loss_comp = calculate_loss(feat, feat_old, feat_large, feat_old_large, masks, self.loss_type, self.temperature,
+                                   self.criterion, self.loss_weight, self.topk_neg)
+        return loss_comp

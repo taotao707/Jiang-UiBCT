@@ -57,7 +57,7 @@ def main_worker(device, ngpus_per_node, args, config):
     if args.dataset["type"] == 'landmark':
         # load training set
         data_loader = module_data.GLDv2TrainDataset(args)
-        train_loader, class_num = data_loader.train_loader, data_loader.class_num
+        train_loader, class_num, args.dataset["class_num"] = data_loader.train_loader, data_loader.class_num, data_loader.class_num
 
         # load evaluation set
         data_loader = module_data.GLDv2EvalDataset(args)
@@ -73,7 +73,7 @@ def main_worker(device, ngpus_per_node, args, config):
     elif args.dataset["type"] == 'face':
         #load training set
         data_loader = module_data.MS1Mv3TrainDataLoader(args)
-        train_loader, class_num = data_loader.train_loader, data_loader.class_num
+        train_loader, class_num, args.dataset["class_num"] = data_loader.train_loader, data_loader.class_num, data_loader.class_num
 
         #load evaluation set 
         data_loader = module_data.IJBCEvalDataLoader(args)
@@ -123,6 +123,8 @@ def main_worker(device, ngpus_per_node, args, config):
                                                         loss_type=args.comp_loss["type"],
                                                         loss_weight=args.comp_loss["weight"],
                                                         gather_all=args.gather_all)
+    elif args.comp_loss["type"] in ["UiBCT", "UiBCT_simple"]:
+        pass #写，UiBCT的loss器定义
     else:
         raise NotImplementedError
 
@@ -142,7 +144,20 @@ def main_worker(device, ngpus_per_node, args, config):
                                   test_loader_list=test_loader_list,
                                   lr_scheduler=lr_scheduler)
     elif args.dataset["type"] == 'face':
-        trainer = FaceTrainer()
+        validation_loader_list = [eval_query_loader, eval_gallery_loader, eval_query_gts]
+        test_loader_list = [test_query_loader, test_gallery_loader, test_query_gts]
+        trainer = FaceTrainer(model,
+                                  comp_training='backward',
+                                  train_loader=train_loader,
+                                  criterion=criterion,
+                                  optimizer=optimizer,
+                                  grad_scaler=grad_scaler,
+                                  args=args,
+                                  config=config,
+                                  logger=logger,
+                                  validation_loader_list=validation_loader_list,
+                                  test_loader_list=test_loader_list,
+                                  lr_scheduler=lr_scheduler)
     else:
         raise NotImplementedError
 

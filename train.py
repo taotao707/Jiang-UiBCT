@@ -62,7 +62,7 @@ def main_worker(device, ngpus_per_node, args, config):
     if args.dataset["type"] == 'landmark':
         # load training set
         data_loader = module_data.GLDv2TrainDataset(args)
-        train_loader, class_num = data_loader.train_loader, data_loader.class_num
+        train_loader, class_num, args.dataset["class_num"] = data_loader.train_loader, data_loader.class_num, data_loader.class_num
 
         # load evaluation set
         data_loader = module_data.GLDv2EvalDataset(args)
@@ -78,7 +78,7 @@ def main_worker(device, ngpus_per_node, args, config):
     elif args.dataset["type"] == 'face':
         #load training set
         data_loader = module_data.MS1Mv3TrainDataLoader(args)
-        train_loader, class_num = data_loader.train_loader, data_loader.class_num
+        train_loader, class_num, args.dataset["class_num"] = data_loader.train_loader, data_loader.class_num, data_loader.class_num
 
         #load evaluation set 
         data_loader = module_data.IJBCEvalDataLoader(args)
