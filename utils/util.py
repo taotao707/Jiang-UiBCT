@@ -71,7 +71,7 @@ def parser_option():
                    target='new_model;model_key_in_ckpt'),
         CustomArgs(['-r', '--resume'], default=None, type=str, help='',
                    target='path of the latest checkpoint (default: None)'),
-        CustomArgs(['--class_num'], default=81313, type=int, help='',
+        CustomArgs(['--class_num'], default=93431, type=int, help='',
                    target='dataset;class_num'),
         CustomArgs(['--old_pretrained_model_path'], default=None, type=str, help='',
                    target='old_model;pretrained_model_path'),
@@ -115,7 +115,7 @@ def parser_option():
     # parser options about backward compatible loss
     options.extend([
         CustomArgs(['--comp_loss_type'], default='bct', type=str,
-                   help='Options: bct / lwf / fd / contra / triplet / l2 / contra_ract / triplet_ract',
+                   help='Options: bct / bct_ract / lwf / fd / contra / triplet / l2 / contra_ract / triplet_ract / UiBCT / UiBCT_simple',
                    target='comp_loss;type'),
         CustomArgs(['--comp_loss_temp'], default=0.01, type=float, help='',
                    target='comp_loss;temperature'),
@@ -131,6 +131,18 @@ def parser_option():
                    target='comp_loss;focal_alpha'),
         CustomArgs(['--comp_loss_weight'], default=1.0, type=float, help='',
                    target='comp_loss;weight'),
+
+        CustomArgs(['--comp_loss_scale'], default=64.0, type=float, help='',
+                   target='comp_loss;scale'),
+        CustomArgs(['--comp_loss_margin'], default=0.5, type=float, help='',
+                   target='comp_loss;margin'),
+        CustomArgs(['--comp_loss_lamda'], default=0.9, type=float, help='',
+                   target='comp_loss;lamda'),
+        CustomArgs(['--comp_loss_hyper'], default=0.05, type=float, help='',
+                   target='comp_loss;hyper'),
+        CustomArgs(['--comp_loss_weight_uibct'], default=1.0, type=float, help='',
+                   target='comp_loss;weight_uibct'),
+
         CustomArgs(['--gather_all'], default=True, type=bool, help='',
                    target='gather_all'),
     ])
